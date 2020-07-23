@@ -2,7 +2,7 @@
 [MICCAI](https://www.google.com "Google's Homepage") | [Arxiv](https://www.google.com "Google's Homepage")
 <!--- put link here --->
 #### Official pytorch implementation of the paper<br>
-
+![alt text](https://github.com/Sulam-Group/LPCNN/blob/master/imgs/overall_framework.png "overall framework")
 ## Requirements
 - [Python 3.6](https://www.python.org/)
 - [PyTorch 1.2.0](https://pytorch.org)
