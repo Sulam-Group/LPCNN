@@ -83,7 +83,7 @@ class WPDNN(nn.Module):
 		self.gen = nn.Sequential(
 				nn.Conv3d(in_channels=1, out_channels=32, kernel_size=3, stride=1, padding=1, bias=False),
 				nn.ReLU(inplace=True),
-				self.make_layer(wBasicBlock, 8),
+				self.make_layer(wBasicBlock, 5),
 				nn.Conv3d(in_channels=32, out_channels=32, kernel_size=1, stride=1, padding=0, bias=False),
 				nn.ReLU(inplace=True),
 				nn.Conv3d(in_channels=32, out_channels=32, kernel_size=1, stride=1, padding=0, bias=False),
@@ -99,47 +99,57 @@ class WPDNN(nn.Module):
 
 	def forward(self, y, dk, mask):
 
-		batch_size, _, x_dim, y_dim, z_dim = y.shape
+		batch_size, _, x_dim, y_dim, z_dim, number = y.shape
 
 		out = []
-
+		
 		dk_batch = []
 		dim1_batch = []
 		dim2_batch = []
 		dim3_batch = []
+		
+		x_est = []
 
-		x_est = torch.empty_like(y)
-		#den_x_pred = torch.empty_like(y)
+		for num in range(number):
+			x_est.append(torch.empty_like(y[:, :, :, :, :, num]))
 
 		for b_n in range(batch_size):
-			dk_batch.append(torch.from_numpy(np.load(dk[b_n])[np.newaxis, :, :, :, np.newaxis]).to(y.device, dtype=torch.float))
+			dk_batch.append([])
+			dim1_batch.append([])
+			dim2_batch.append([])
+			dim3_batch.append([])
 
-			dim1_batch.append(dk_batch[-1].shape[1])
-			dim2_batch.append(dk_batch[-1].shape[2])
-			dim3_batch.append(dk_batch[-1].shape[3])
+			dk_list = dk[b_n].split(' ')[:-1]
+			for num in range(number):
+				dk_batch[-1].append(torch.from_numpy(np.load(dk_list[num])[np.newaxis, :, :, :, np.newaxis]).to(y.device, dtype=torch.float))
 
-			x_est[b_n, :, :, :, :] = self.alpha * torch.ifft(dk_batch[-1] * torch.rfft(F.pad(y[b_n, :, :, :, :], (0, dim3_batch[-1]-z_dim, 0, dim2_batch[-1]-y_dim, 0, dim1_batch[-1]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True, onesided=False)[:, :x_dim, :y_dim, :z_dim, 0]
+				dim1_batch[-1].append(dk_batch[-1][-1].shape[1])
+				dim2_batch[-1].append(dk_batch[-1][-1].shape[2])
+				dim3_batch[-1].append(dk_batch[-1][-1].shape[3])			
 
-			#tkd_dipole = dk_batch[-1].clone()
-			#tkd_dipole[torch.abs(tkd_dipole) < 0.18] = 0.18
-	
-			#den_x_pred[b_n, :, :, :, :] = torch.irfft(torch.rfft(F.pad(y[b_n, :, :, :, :], (0, dim3_batch[-1]-z_dim, 0, dim2_batch[-1]-y_dim, 0, dim1_batch[-1]-x_dim)), 3, normalized=True, onesided=False) / tkd_dipole, 3, normalized=True, onesided=False)[:, :x_dim, :y_dim, :z_dim]
+
+				x_est[num][b_n, :, :, :, :] = self.alpha * torch.ifft(dk_batch[-1][num] * torch.rfft(F.pad(y[b_n, :, :, :, :, num], (0, dim3_batch[-1][num]-z_dim, 0, dim2_batch[-1][num]-y_dim, 0, dim1_batch[-1][num]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True)[:, :x_dim, :y_dim, :z_dim, 0]
+
 
 		for i in range(self.iter_num):
 
-			#pn_x_pred = torch.empty_like(y)
 			if i == 0:
-				pn_x_pred = 0
+				pn_x_pred = torch.zeros_like(y[:, :, :, :, :, num])
+
+				for num in range(number):
+					pn_x_pred += x_est[num]
 			else:
-				pn_x_pred = torch.empty_like(y)
+				pn_x_pred = den_x_pred
 		
 				for b_n in range(batch_size):
-					pn_x_pred[b_n, :, :, :, :] = den_x_pred[b_n, :, :, :, :] - self.alpha * torch.ifft(dk_batch[b_n] * dk_batch[b_n] * torch.rfft(F.pad(den_x_pred[b_n, :, :, :, :], (0, dim3_batch[b_n]-z_dim, 0, dim2_batch[b_n]-y_dim, 0, dim1_batch[b_n]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True, onesided=False)[:, :x_dim, :y_dim, :z_dim, 0]
+					for num in range(number):
+						pn_x_pred[b_n, :, :, :, :] += x_est[num][b_n, :, :, :, :] - self.alpha * torch.ifft(dk_batch[b_n][num] * dk_batch[b_n][num] * torch.rfft(F.pad(den_x_pred[b_n, :, :, :, :], (0, dim3_batch[b_n][num]-z_dim, 0, dim2_batch[b_n][num]-y_dim, 0, dim1_batch[b_n][num]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True)[:, :x_dim, :y_dim, :z_dim, 0]
 
-			x_input = (((x_est + pn_x_pred) - self.gt_mean) / self.gt_std) * mask
+			x_input = ((pn_x_pred - self.gt_mean) / self.gt_std) * mask[:, :, :, :, :, 0]
 			x_pred = self.gen(x_input)
-			den_x_pred = ((x_pred * self.gt_std) + self.gt_mean) * mask
-			#out.append(x_pred)
+			den_x_pred = ((x_pred * self.gt_std) + self.gt_mean) * mask[:, :, :, :, :, 0]
 
-		return x_pred
+			out.append(x_pred)
+
+		return out
 
