@@ -9,5 +9,5 @@
 
 ## Environment Settings
 ```
-conda env create -f environment.yml
+conda env create --name MY_ENV -f environment.yml
 ```
