@@ -128,7 +128,7 @@ class WPDNN(nn.Module):
 				dim3_batch[-1].append(dk_batch[-1][-1].shape[3])			
 
 
-				x_est[num][b_n, :, :, :, :] = self.alpha * torch.irfft(dk_batch[-1][num] * torch.rfft(F.pad(y[b_n, :, :, :, :, num], (0, dim3_batch[-1][num]-z_dim, 0, dim2_batch[-1][num]-y_dim, 0, dim1_batch[-1][num]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True, onesided=False)[:, :x_dim, :y_dim, :z_dim]
+				x_est[num][b_n, :, :, :, :] = self.alpha * torch.ifft(dk_batch[-1][num] * torch.rfft(F.pad(y[b_n, :, :, :, :, num], (0, dim3_batch[-1][num]-z_dim, 0, dim2_batch[-1][num]-y_dim, 0, dim1_batch[-1][num]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True, onesided=False)[:, :x_dim, :y_dim, :z_dim, 0]
 
 
 		for i in range(self.iter_num):
@@ -143,7 +143,7 @@ class WPDNN(nn.Module):
 		
 				for b_n in range(batch_size):
 					for num in range(number):
-						pn_x_pred[b_n, :, :, :, :] += x_est[num][b_n, :, :, :, :] - self.alpha * torch.irfft(dk_batch[b_n][num] * dk_batch[b_n][num] * torch.rfft(F.pad(den_x_pred[b_n, :, :, :, :], (0, dim3_batch[b_n][num]-z_dim, 0, dim2_batch[b_n][num]-y_dim, 0, dim1_batch[b_n][num]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True, onesided=False)[:, :x_dim, :y_dim, :z_dim]
+						pn_x_pred[b_n, :, :, :, :] += x_est[num][b_n, :, :, :, :] - self.alpha * torch.ifft(dk_batch[b_n][num] * dk_batch[b_n][num] * torch.rfft(F.pad(den_x_pred[b_n, :, :, :, :], (0, dim3_batch[b_n][num]-z_dim, 0, dim2_batch[b_n][num]-y_dim, 0, dim1_batch[b_n][num]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True, onesided=False)[:, :x_dim, :y_dim, :z_dim, 0]
 
 			x_input = ((pn_x_pred - self.gt_mean) / self.gt_std) * mask[:, :, :, :, :, 0]
 			x_pred = self.gen(x_input)
