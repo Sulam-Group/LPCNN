@@ -75,14 +75,14 @@ for item in mask_data_list:
 	subject = item.split('/')[-3]
 	ori = item.split('/')[-2]
 
-	directory = 'data/numpy_data/whole/mask_data/' + subject + '/' + ori
+	directory = 'data/numpy_data/whole/mask_data/' + subject
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
 	mask = nib.load(item)
 	mask_data = mask.get_fdata()
-	np.save(directory + '/' + subject + '_' + ori + '_mask.npy', mask_data)
-	print(subject + '_' + ori + '_mask saved.')
+	np.save(directory + '/' + subject + '_mask.npy', mask_data)
+	print(subject + '_mask saved.')
 
 for item in dipole_data_list:
 
