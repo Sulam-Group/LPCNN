@@ -112,7 +112,7 @@ with open(whole_validation, 'r') as f:
 		
 whole_mse = whole_total_sum / whole_total_num
 
-np.save('data/numpy_data/whole/list/validate_mse.npy', whole_mse)
+np.save('data/numpy_data/whole/list/validation_mse.npy', whole_mse)
 
 partition_total_sum = 0
 partition_total_num = 0
@@ -136,6 +136,6 @@ with open(partition_validation, 'r') as f:
 		
 partition_mse = partition_total_sum / partition_total_num
 
-np.save('data/numpy_data/partition/list/validate_mse.npy', partition_mse)
+np.save('data/numpy_data/partition/list/validation_mse.npy', partition_mse)
 
 	

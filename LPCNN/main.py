@@ -18,55 +18,26 @@ from tool.tool import *
 import timeit
 import socket
 
-data_normalization = True
-
-# parameter for relative value evaluation(validate)
-## mix16_data
-#validate_mse = 0.0006881151174021742
-#whole_validate_mse = 0.0008006943643658826 
-## synthetic500_data
-#validate_mse = 0.0006969514815906405
-#whole_validate_mse = 0.0008042192171182903
-## synthetic100_data
-#validate_mse = 0.0006935200203605111 #partition100
-#validate_mse = 0.0006913588246836717 #partition
-#whole_validate_mse = 0.0008042192171182896
-## mix_data
-#validate_mse = 0.0006488927369219911
-#whole_validate_mse = 0.0007885226196501292
-## real_data
-validate_mse = 0.0006488490366104272
-whole_validate_mse = 0.0007881615545795491
-
 # output directory
-if socket.gethostname() == 'ka':
-	os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-	root_dir = '/home/kuowei/Desktop/'
-elif socket.gethostname() == 'rafiki':
-	os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-	root_dir = '/mnt/data0/kuowei/'
-elif socket.gethostname() == 'kuowei':
-	os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-	root_dir = '/home/kuowei/Desktop/'
-else:
-	os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
-	root_dir = '/home-3/klai10@jhu.edu/data/kuowei/'
-checkpoint_dir = './checkpoint/'
-output_log_dir = './log/'
-tb_log_dir = './tb_log/'
-vis_output_path = './vis_output/'
+root_dir = 'data/'
+checkpoint_dir = 'checkpoints/'
+tb_log_dir = 'LPCNN/tb_log/'
+vis_output_path = 'LPCNN/vis_output/'
+
+# parameter for relative value evaluation(validation)
+validation_mse = np.load(root_dir + 'numpy_data/partition/list/validation_mse.npy')
+whole_validation_mse = np.load(root_dir + 'numpy_data/whole/list/validation_mse.npy')
+
+data_normalization = True
 
 # prediction data number
 prediction_set = 'val' #['train', 'val', 'test', 'ext']
-subject_num = 'Sub003'
-ori_num = 'ori1'
 case = 'whole' #['patch', 'whole']
-patch_num = '0'
 
-prediction_data = (prediction_set, subject_num, ori_num, patch_num, case)
+prediction_data = (prediction_set, case)
 
 def main(args):
-	start = timeit.default_timer()
+
 	device = torch.device('cuda:0' if not args.no_cuda else 'cpu')
 
 	if args.mode == 'train':
@@ -87,7 +58,7 @@ def main(args):
 		print(args.dataset.lower() + ' dataset loaded.')
 
 		## load model
-		model = chooseModel(args, train_loader.dataset.root)
+		model = chooseModel(args, train_loader.dataset.root_path)
 		model.to(device)
 		print(args.model_arch + ' loaded.')
 
@@ -96,10 +67,10 @@ def main(args):
 			model = nn.DataParallel(model)
 
 		## loss function and optimizer
-		loss_fn = chooseLoss(args, 1)
+		loss_fn = chooseLoss(args, 0)
 		optimizer = chooseOptimizer(model, args)
 		scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
-		#scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
+
 		## initailize statistic result
 		start_epoch = 0
 		best_per_index = 1000
@@ -117,7 +88,7 @@ def main(args):
 		for epoch in range(start_epoch, args.num_epoch):
 			
 			total_tb_it = train(args, device, model, train_loader, epoch, loss_fn, optimizer, tb_writer, total_tb_it)
-			mse_index = validate(device, model, val_loader, epoch, loss_fn, tb_writer)
+			mse_index = validation(device, model, val_loader, epoch, loss_fn, tb_writer)
 			for param_group in optimizer.param_groups:
 				print('Learning rate: %.8f' %(param_group['lr']))	
 
@@ -141,7 +112,7 @@ def main(args):
 		data_loader = loadData(args, root_dir, prediction_data, normalize=data_normalization)
 
 		## load model
-		model = chooseModel(args, data_loader.dataset.root)
+		model = chooseModel(args, data_loader.dataset.root_path)
 		model.load_state_dict(torch.load(args.resume_file, map_location=device)['model_state'])
 		model.to(device)
 		print(sum([p.numel() for p in model.parameters()]))
@@ -155,15 +126,13 @@ def main(args):
 		print(model_name)
 
 		## loss function and optimizer
-		loss_fn = chooseLoss(args, 1)
+		loss_fn = chooseLoss(args, 0)
 		optimizer = chooseOptimizer(model, args)
 		#optimizer.load_state_dict(torch.load(args.resume_file, map_location=device)['optimizer_state'])
 
 		predict(args, device, model, data_loader, loss_fn, model_name)
 	else:
 		raise Exception('Unrecognized mode.')
-	stop = timeit.default_timer()
-	print('Time: ', stop - start)
 
 def train(args, device, model, train_loader, epoch, loss_fn, optimizer, tb_writer, total_tb_it):
 
@@ -171,32 +140,20 @@ def train(args, device, model, train_loader, epoch, loss_fn, optimizer, tb_write
 
 	model.train()
 
-	for batch_count, (input_data_list, gt_data, mask_data_list, dk_data_list, input_name) in enumerate(train_loader):
+	for batch_count, (phase_data_list, gt_data, mask_data, dipole_data_list, input_name) in enumerate(train_loader):
 
 		#cuda
-		input_data = input_data_list.to(device, dtype=torch.float)
+		phase_data = phase_data_list.to(device, dtype=torch.float)
 		gt_data = gt_data.to(device, dtype=torch.float)
-		mask_data = mask_data_list.to(device, dtype=torch.float)
-		#dk_data = dk_data.to(device, dtype=torch.float)
+		mask_data = mask_data.to(device, dtype=torch.float)
 
 		optimizer.zero_grad()
 
-		output_data = model(input_data, dk_data_list, mask_data.unsqueeze(1))
-		#output_data = model(input_data)	
+		output_data = model(phase_data, dipole_data_list, mask_data.unsqueeze(1))
 
-		loss = loss_fn(output_data, gt_data, mask_data.unsqueeze(1), input_data, dk_data_list, train_loader.dataset.root)
-		#loss = 0
-		#for i in range(len(output_data)):
-		#	loss += loss_fn(output_data[i], gt_data)
-
-		#loss = torch.mean(loss * wt_data.view(-1, 1, 1, 1, 1))
+		loss = loss_fn(output_data, gt_data)
 
 		loss.backward()
-
-		gradient_clipping_list = ['vdsrr']
-
-		if args.model_arch in gradient_clipping_list:
-			nn.utils.clip_grad_norm_(model.parameters(), 0.4)
 
 		optimizer.step()
 
@@ -210,7 +167,7 @@ def train(args, device, model, train_loader, epoch, loss_fn, optimizer, tb_write
 
 	return total_tb_it
 
-def validate(device, model, val_loader, epoch, loss_fn, tb_writer):
+def validation(device, model, val_loader, epoch, loss_fn, tb_writer):
 
 	model.eval()
 
@@ -221,38 +178,29 @@ def validate(device, model, val_loader, epoch, loss_fn, tb_writer):
 
 	with torch.no_grad():
 
-		for batch_count, (input_data_list, gt_data, mask_data_list, dk_data_list, input_name) in enumerate(val_loader):
+		for batch_count, (phase_data_list, gt_data, mask_data, dipole_data_list, input_name) in enumerate(val_loader):
 
 			#cuda
-			input_data = input_data_list.to(device, dtype=torch.float)
+			phase_data = phase_data_list.to(device, dtype=torch.float)
 			gt_data = gt_data.to(device, dtype=torch.float)
-			mask_data = mask_data_list.to(device, dtype=torch.float)
-			#dk_data = dk_data.to(device, dtype=torch.float)
+			mask_data = mask_data.to(device, dtype=torch.float)
 
-			output_data = model(input_data, dk_data_list, mask_data.unsqueeze(1))
-			#output_data = model(input_data)			
+			output_data = model(phase_data, dipole_data_list, mask_data.unsqueeze(1))
 
-			loss = loss_fn(output_data, gt_data, mask_data.unsqueeze(1), input_data, dk_data_list, val_loader.dataset.root)
-			#loss = 0
-			#for i in range(len(output_data)):
-			#	loss += loss_fn(output_data[i], gt_data)
-
-			#loss = torch.mean(loss * wt_data.view(-1, 1, 1, 1, 1))
+			loss = loss_fn(output_data, gt_data)
 
 			tb_loss += loss.item()
 
-			mask = torch.squeeze(mask_data[:, :, :, :, 0], 0).cpu().numpy()[:,:,:,np.newaxis]
+			mask = torch.squeeze(mask_data, 0).cpu().numpy()[:,:,:,np.newaxis]
 			
 			if data_normalization:
-				og_output = torch.squeeze(output_data[-1], 0).permute(1, 2, 3, 0).cpu().numpy() * val_loader.dataset.gt_std
+				og_output = torch.squeeze(output_data, 0).permute(1, 2, 3, 0).cpu().numpy() * val_loader.dataset.gt_std
 				og_output = og_output + val_loader.dataset.gt_mean
 				og_output = og_output * mask
-				#og_output = torch.squeeze(output_data, 0).permute(1, 2, 3, 0).cpu().numpy() * mask
 
 				og_gt = torch.squeeze(gt_data, 0).permute(1, 2, 3, 0).cpu().numpy() * val_loader.dataset.gt_std
 				og_gt = og_gt + val_loader.dataset.gt_mean
 				og_gt = og_gt * mask
-				#og_gt = torch.squeeze(gt_data, 0).permute(1, 2, 3, 0).cpu().numpy() * mask
 
 			else:
 				og_output = torch.squeeze(output_data[-1], 0).permute(1, 2, 3, 0).cpu().numpy() * mask
@@ -263,11 +211,11 @@ def validate(device, model, val_loader, epoch, loss_fn, tb_writer):
 			ssim_perf += qsm_ssim(og_gt, og_output, mask, root_dir)
 
 		avg_tb_loss = tb_loss / len(val_loader.dataset)
-		avg_mse_loss = mse_loss / len(val_loader.dataset) / validate_mse
+		avg_mse_loss = mse_loss / len(val_loader.dataset) / validation_mse
 		avg_psnr_perf = psnr_perf / len(val_loader.dataset)
 		avg_ssim_perf = ssim_perf / len(val_loader.dataset)
 		print('alpha: %.3f' %(model.alpha.cpu().numpy()))
-		print('##Validate loss: %.8f Mse: %.8f PSNR: %.8f SSIM: %.8f' %(avg_tb_loss, avg_mse_loss, avg_psnr_perf, avg_ssim_perf))
+		print('##Validation loss: %.8f Mse: %.8f PSNR: %.8f SSIM: %.8f' %(avg_tb_loss, avg_mse_loss, avg_psnr_perf, avg_ssim_perf))
 
 		tb_writer.add_scalar('val/overall_loss', avg_tb_loss, epoch)
 		tb_writer.add_scalar('val/Mse', avg_mse_loss, epoch)
@@ -409,9 +357,9 @@ parser.add_argument('--number', type=int, default=3, choices=[1, 2, 3], help='in
 parser.add_argument('--dataset', default='qsm', choices=['qsm'], help='dataset to use (default: qsm)')
 parser.add_argument('--tesla', default=7, type=int, choices=[3, 7], help='B0 tesla(default: 7)')
 parser.add_argument('--gpu_num', default=1, type=int, choices=[1, 2, 3, 4], help='number of gpu (default: 1)')
-parser.add_argument('--model_arch', default='vdsr', choices=['vdsr', 'vdsrr', 'pdnn', 'pldnn', 'pndnn', 'wpdnn', 'wpldnn', 'pudnn'], help='network model (default: vdsrr)')
-parser.add_argument('--num_epoch', default=600, type=int, metavar='N', help='number of total epochs to run (default: 20)')
-parser.add_argument('--batch_size', type=int, default=10, help='batch size (default: 4)')
+parser.add_argument('--model_arch', default='lpcnn', choices=['lpcnn'], help='network model (default: lpcnn)')
+parser.add_argument('--num_epoch', default=100, type=int, metavar='N', help='number of total epochs to run (default: 100)')
+parser.add_argument('--batch_size', type=int, default=2, help='batch size (default: 2)')
 parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate (default: 1e-4)')
 parser.add_argument('--optimizer', default='sgd', choices=['sgd', 'adam', 'sgdadam'], help='optimizer to use (default: adam)')
 parser.add_argument('--momentum', type=float, default=0.9, help='SGD momentum (default: 0.9)')

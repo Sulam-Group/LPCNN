@@ -69,7 +69,7 @@ class wBasicBlock(nn.Module):
 		return out
 
 		
-class WPDNN(nn.Module):
+class LPCNN(nn.Module):
 	def __init__(self, gt_mean, gt_std):
 		super().__init__()
 		self.gt_mean = torch.from_numpy(np.load(gt_mean)).float()
@@ -83,7 +83,7 @@ class WPDNN(nn.Module):
 		self.gen = nn.Sequential(
 				nn.Conv3d(in_channels=1, out_channels=32, kernel_size=3, stride=1, padding=1, bias=False),
 				nn.ReLU(inplace=True),
-				self.make_layer(wBasicBlock, 5),
+				self.make_layer(wBasicBlock, 8),
 				nn.Conv3d(in_channels=32, out_channels=32, kernel_size=1, stride=1, padding=0, bias=False),
 				nn.ReLU(inplace=True),
 				nn.Conv3d(in_channels=32, out_channels=32, kernel_size=1, stride=1, padding=0, bias=False),
@@ -145,11 +145,9 @@ class WPDNN(nn.Module):
 					for num in range(number):
 						pn_x_pred[b_n, :, :, :, :] += x_est[num][b_n, :, :, :, :] - self.alpha * torch.ifft(dk_batch[b_n][num] * dk_batch[b_n][num] * torch.rfft(F.pad(den_x_pred[b_n, :, :, :, :], (0, dim3_batch[b_n][num]-z_dim, 0, dim2_batch[b_n][num]-y_dim, 0, dim1_batch[b_n][num]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True)[:, :x_dim, :y_dim, :z_dim, 0]
 
-			x_input = ((pn_x_pred - self.gt_mean) / self.gt_std) * mask[:, :, :, :, :, 0]
+			x_input = ((pn_x_pred - self.gt_mean) / self.gt_std) * mask
 			x_pred = self.gen(x_input)
-			den_x_pred = ((x_pred * self.gt_std) + self.gt_mean) * mask[:, :, :, :, :, 0]
+			den_x_pred = ((x_pred * self.gt_std) + self.gt_mean) * mask
 
-			out.append(x_pred)
-
-		return out
+		return x_pred
 

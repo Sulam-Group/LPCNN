@@ -3,7 +3,7 @@ __pycache__/
 .DS_Store
 *.npy
 
-checkpoint/
+checkpoints/
 tb_log/
 log/
 vis_output/
