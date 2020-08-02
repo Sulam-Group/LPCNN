@@ -5,6 +5,5 @@ __pycache__/
 
 checkpoints/
 tb_log/
-log/
-vis_output/
-
+result/
+test_result/

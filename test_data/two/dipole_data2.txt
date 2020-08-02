@@ -1,0 +1,2 @@
+data/numpy_data/whole/dipole_data/Sub003/ori1/Sub003_ori1_dipole.npy
+data/numpy_data/whole/dipole_data/Sub003/ori2/Sub003_ori2_dipole.npy

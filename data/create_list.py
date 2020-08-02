@@ -6,8 +6,8 @@ import argparse
 data_path = 'data/numpy_data/whole'
 partition_data_path = 'data/numpy_data/partition'
 
-train_set = ['Sub001', 'Sub002']
-validation_set = ['Sub003']
+train_set = ['Sub001', 'Sub002', 'Sub004', 'Sub005', 'Sub008', 'Sub009']
+validation_set = ['Sub003', 'Sub006']
 
 def combination(total_ori_num, number, comb_list=None, comb=None, previous_x=0):
 	if comb_list is None:

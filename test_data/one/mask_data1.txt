@@ -1,0 +1,1 @@
+data/nifti_data/Sub003/cosmos/Sub003_mask.nii.gz

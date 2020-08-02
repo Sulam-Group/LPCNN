@@ -9,7 +9,10 @@ mask_data_list = []
 
 x = [(0, 64), (32, 96), (64, 128), (96, 160), (128, 192), (160, 224)]
 y = [(0, 64), (32, 96), (64, 128), (96, 160), (128, 192), (160, 224)]
-z = [(0, 64), (14, 78), (32, 96), (48, 112), (62, 126)]
+z1 = [(0, 64), (14, 78), (32, 96), (48, 112), (62, 126)]
+z2 = [(0, 64), (14, 78), (32, 96), (46, 110)]
+
+second_group = ['Sub005', 'Sub006', 'Sub008', 'Sub009']
 
 for r, d, f in os.walk('data/numpy_data/whole/mask_data'):
 	for file in f:
@@ -21,6 +24,11 @@ for item in mask_data_list:
 	subject = item.split('/')[-2]
 
 	total_ori_num = len([name for name in os.listdir('data/numpy_data/whole/phase_data/' + subject) if 'ori' in name])
+
+	if subject in second_group:
+		z = z2
+	else:
+		z = z1
 
 	for ori in range(1, total_ori_num+1):
 

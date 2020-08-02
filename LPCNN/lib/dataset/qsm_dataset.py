@@ -66,9 +66,9 @@ class QsmDataset(data.Dataset):
 				path_list = self.root + self.sep + '/cosmos_pdata/' + comp[0] + '/' + comp[0] + '_cosmos_' + comp[1] + '.npy'
 
 			elif data == 'name':
-				path_list = comp[0]
+				path_list = comp[0] + '_'
 				for i in range(self.number):
-					path_list = path_list + '_' + comp[i+2]
+					path_list = path_list + comp[i+2]
 				path_list = path_list + '_' + comp[1]
 
 		elif self.sep == 'whole':
@@ -89,9 +89,9 @@ class QsmDataset(data.Dataset):
 				path_list = self.root + self.sep + '/cosmos_data/' + comp[0] + '/' + comp[0] + '_cosmos.npy'
 
 			elif data == 'name':
-				path_list = comp[0]
+				path_list = comp[0] + '_'
 				for i in range(self.number):
-					path_list = path_list + '_' + comp[i+2]
+					path_list = path_list + comp[i+1]
 		
 		return path_list
 

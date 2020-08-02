@@ -107,7 +107,7 @@ class LPCNN(nn.Module):
 		dim1_batch = []
 		dim2_batch = []
 		dim3_batch = []
-		
+	
 		x_est = []
 
 		for num in range(number):
@@ -120,6 +120,7 @@ class LPCNN(nn.Module):
 			dim3_batch.append([])
 
 			dk_list = dk[b_n].split(' ')[:-1]
+
 			for num in range(number):
 				dk_batch[-1].append(torch.from_numpy(np.load(dk_list[num])[np.newaxis, :, :, :, np.newaxis]).to(y.device, dtype=torch.float))
 
