@@ -296,7 +296,7 @@ parser.add_argument('--model_arch', default='lpcnn', choices=['lpcnn'], help='ne
 parser.add_argument('--num_epoch', default=100, type=int, metavar='N', help='number of total epochs to run (default: 100)')
 parser.add_argument('--batch_size', type=int, default=2, help='batch size (default: 2)')
 parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate (default: 1e-4)')
-parser.add_argument('--optimizer', default='sgd', choices=['sgd', 'adam'], help='optimizer to use (default: adam)')
+parser.add_argument('--optimizer', default='adam', choices=['sgd', 'adam'], help='optimizer to use (default: adam)')
 parser.add_argument('--momentum', type=float, default=0.9, help='SGD momentum (default: 0.9)')
 parser.add_argument('--no_cuda', action='store_true', default=False, help='disables CUDA training')
 parser.add_argument('--no_save', action='store_true', default=False, help='disables saving result')
