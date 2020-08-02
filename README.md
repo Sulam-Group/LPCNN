@@ -13,10 +13,10 @@ In this repository, we provides our official implementation of LPCNN network and
 ## Environment Settings
 Users can use the command to install all requried libraries.
 ```
-conda env create --name MY_ENV -f environment.yml
+conda env create --name [MY_ENV] -f environment.yml
 ```
 ## Dataset
-We provide the script to generate the dataset we used in our paper.
+We provide the script to generate the dataset we used in our paper. `[NUMBER]` here indicates single or multiple phase input dataset.
 ```
 ./create_dataset.sh [NUMBER]
 ```
