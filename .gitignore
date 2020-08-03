@@ -3,7 +3,6 @@ __pycache__/
 .DS_Store
 *.npy
 
-checkpoints/
 tb_log/
 result/
 test_result/
