@@ -11,7 +11,7 @@ In this repository, we provides official implementation of LPCNN network and the
 - [PyTorch 1.2.0](https://pytorch.org)
 
 ## Environment Settings
-Users can use the command to install all requried libraries.
+use the command below to install all requried libraries.
 ```
 conda env create --name [MY_ENV] -f environment.yml
 ```
