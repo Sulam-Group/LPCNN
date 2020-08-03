@@ -19,3 +19,8 @@ echo "Done!"
 
 echo "[dataset is successfully generated.]"
 
+echo "Create directories.."
+mkdir -p checkpoints
+mkdir -p LPCNN/result
+mkdir -p LPCNN/tb_log
+mkdir -p LPCNN/test_result
