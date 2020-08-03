@@ -3,7 +3,7 @@
 <!--- put link here --->
 
 ### Official pytorch implementation of the paper<br>
-In this repository, we provides our official implementation of LPCNN network and the QSM train dataset for MICCAI.<br>
+In this repository, we provides official implementation of LPCNN network and the QSM dataset we used in MICCAI paper.<br><br>
 ![alt text](https://github.com/Sulam-Group/LPCNN/blob/master/imgs/overall_framework.png "overall framework")
 
 ## Requirements
