@@ -28,6 +28,7 @@ We provide the script to generate the dataset we used in our paper. `[NUMBER]` h
 ### Train
 ```
 python LPCNN/main.py 
+
 arguments:
 --mode                        train or predict [default is train]
 --name                        name of the experiment and model [default is _test]
@@ -49,7 +50,19 @@ python LPCNN/main.py --mode train --name _test --number 1 --tesla 7 --model_arch
 ```
 ### Test on validation set 
 ```
-python LPCNN/main.py --mode predict --number [PHASE_INPUT_NUMBER] --tesla [TESLA] --model_arch lpcnn --resume_file [MODEL_CHECKPOINT] --pred_set val --size whole
+python LPCNN/main.py
+
+arguments:
+--mode                        train or predict [default is train]
+--number                      number of the phase input, choices=[1, 2, 3], [default is 1]
+--tesla                       tesla of the dataset
+--gpu_num                     number of gpus [default is 1]
+--model_arch                  network architecture [default is lpcnn]
+--no_cuda                     disables CUDA training [default is false]
+--no_save                     disable saving result [default is false]
+--resume_file                 resume saved checkpoint for testing [default is None]
+--pred_set                    choose which set for testing, choices=[train, val, test], [default is val]
+--size                        choose whole or patch images for testing, choices=['whole', 'patch'], [default is whole]
 ```
 Template command using provided dataset:
 ```
@@ -57,9 +70,22 @@ python LPCNN/main.py --mode predict --number 1 --tesla 7 --model_arch lpcnn --re
 ```
 ### Test on your own data
 ```
-python LPCNN/inference.py --save_name [SAVE_NAME] --number [PHASE_INPUT_NUMBER] --tesla [TESLA] --phase_file [PHASE_DATA_PATH] --dipole_file [DIPOLE_DATA_PATH] --mask_file [MASK_DATA_PATH] --model_arch lpcnn --resume_file [MODEL_CHECKPOINT] 
+python LPCNN/inference.py
+
+arguments:
+--save_name                   save out name
+--number                      number of the phase input, choices=[1, 2, 3], [default is 1]
+--phase_file                  phase data list path
+--dipole_file                 dipole data list path
+--mask_file                   mask_data path
+--gt_file                     ground-truth data path (optional)
+--tesla                       tesla of the dataset
+--gpu_num                     number of gpus [default is 1]
+--model_arch                  network architecture [default is lpcnn]
+--no_cuda                     disables CUDA training [default is false]
+--resume_file                 resume saved checkpoint for testing [default is None]
 ```
-If you have ground-truth QSM result, you can add --gt_file `[GT_DATA_PATH]` and the function will calculate the performance.<br>
+If you have ground-truth QSM result, you can add `--gt_file [GT_DATA_PATH]` and the function will calculate the performance.<br>
 Template command using provided dataset (number=3):
 ```
 python LPCNN/inference.py --number 3 --phase_file test_data/three/phase_data3.txt --dipole_file test_data/three/dipole_data3.txt --mask_file test_data/three/mask_data3.txt --gt_file test_data/three/gt_data3.txt --resume_file checkpoints/lpcnn_test_Bmodel.pkl
