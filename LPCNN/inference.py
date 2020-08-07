@@ -39,29 +39,29 @@ def main(args):
 
 	# load data
 	phase_path_list = []
-	with open(args.phase_file) as f:
+	with open(str(Path(args.phase_file))) as f:
 		for line in f:
 			phase_path_list.append(line.strip('\n'))
-	x, y, z = nib.load(phase_path_list[0]).get_fdata().shape
+	x, y, z = nib.load(str(Path(phase_path_list[0]))).get_fdata().shape
 	phase_data_list = np.zeros((x, y, z, args.number))
 
-	phase_example = phase_path_list[0]
+	phase_example = str(Path(phase_path_list[0]))
 	for i in range(args.number):
-		phase_data_list[:, :, :, i] = nib.load(phase_path_list[i]).get_fdata() / (args.tesla * gamma)
+		phase_data_list[:, :, :, i] = nib.load(str(Path(phase_path_list[i]))).get_fdata() / (args.tesla * gamma)
 
 	dipole_data_list = ''
-	with open(args.dipole_file) as f:
+	with open(str(Path(args.dipole_file))) as f:
 		for line in f:
-			dipole_data_list = dipole_data_list + line.strip('\n') + ' '
+			dipole_data_list = dipole_data_list + str(Path(line.strip('\n'))) + ' '
 	
-	with open(args.mask_file) as f:
+	with open(str(Path(args.mask_file))) as f:
 		for line in f:
-			mask_data = nib.load(line.strip('\n')).get_fdata()
+			mask_data = nib.load(str(Path(line.strip('\n')))).get_fdata()
 
 	if not args.gt_file == None:
-		with open(args.gt_file) as f:
+		with open(str(Path(args.gt_file))) as f:
 			for line in f:
-				gt_data = nib.load(line.strip('\n')).get_fdata()
+				gt_data = nib.load(str(Path(line.strip('\n')))).get_fdata()
 	
 	# load model
 	model = chooseModel(args, root_dir / Path('numpy_data/whole/list/'))
