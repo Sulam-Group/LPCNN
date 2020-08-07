@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 
 import torch
 from torch.utils import data
@@ -21,7 +22,7 @@ class QsmDataset(data.Dataset):
 
 		self.number = number
 
-		self.root_path = self.root + self.sep + '/list/'
+		self.root_path = self.root / self.sep / 'list'
 
 		self.gt_mean = None
 		self.gt_std = None
@@ -31,15 +32,15 @@ class QsmDataset(data.Dataset):
 			gt_mean_name = 'train_gt_mean.npy'
 			gt_std_name = 'train_gt_std.npy'
 
-			self.gt_mean = np.load(os.path.join(self.root_path, gt_mean_name))
-			self.gt_std = np.load(os.path.join(self.root_path, gt_std_name))
+			self.gt_mean = np.load(str(self.root_path / gt_mean_name))
+			self.gt_std = np.load(str(self.root_path / gt_std_name))
 
 		#get data path
-		self.data_list_file = os.path.join(self.root_path, split + '.txt')
+		self.data_list_file = self.root_path / (split + '.txt')
 
 		self.data_list = []
 		
-		with open(self.data_list_file, 'r') as f:
+		with self.data_list_file.open(mode='r') as f:
 			for line in f:
 				self.data_list.append(line.rstrip('\n'))
 
@@ -52,18 +53,18 @@ class QsmDataset(data.Dataset):
 			if data == 'phase':
 				path_list = []
 				for i in range(self.number):
-					path_list.append(self.root + self.sep + '/phase_pdata/' + comp[0] + '/' + comp[i+2] + '/' + comp[0] + '_' + comp[i+2] + '_phase_' + comp[1] + '.npy')
+					path_list.append(self.root / self.sep / 'phase_pdata' / comp[0] / comp[i+2] / (comp[0] + '_' + comp[i+2] + '_phase_' + comp[1] + '.npy'))
 
 			elif data == 'dipole':
 				path_list = ''
 				for i in range(self.number):
-					path_list = path_list + self.root + 'whole' + '/dipole_data/' + comp[0] + '/' + comp[i+2] + '/' + comp[0] + '_' + comp[i+2] + '_dipole.npy '
+					path_list = path_list + str(self.root / 'whole' / 'dipole_data' / comp[0] / comp[i+2] / (comp[0] + '_' + comp[i+2] + '_dipole.npy')) + ' '
 
 			elif data == 'mask':
-				path_list = self.root + self.sep + '/mask_pdata/' + comp[0] + '/' + comp[0] + '_mask_' + comp[1] + '.npy'
+				path_list = self.root / self.sep / 'mask_pdata' / comp[0] / (comp[0] + '_mask_' + comp[1] + '.npy')
 
 			elif data == 'gt':
-				path_list = self.root + self.sep + '/cosmos_pdata/' + comp[0] + '/' + comp[0] + '_cosmos_' + comp[1] + '.npy'
+				path_list = self.root / self.sep / 'cosmos_pdata' / comp[0] / (comp[0] + '_cosmos_' + comp[1] + '.npy')
 
 			elif data == 'name':
 				path_list = comp[0] + '_'
@@ -75,18 +76,18 @@ class QsmDataset(data.Dataset):
 			if data == 'phase':
 				path_list = []
 				for i in range(self.number):
-					path_list.append(self.root + self.sep + '/phase_data/' + comp[0] + '/' + comp[i+1] + '/' + comp[0] + '_' + comp[i+1] + '_phase.npy')
+					path_list.append(self.root / self.sep / 'phase_data' / comp[0] / comp[i+1] / (comp[0] + '_' + comp[i+1] + '_phase.npy'))
 			
 			elif data == 'dipole':
 				path_list = ''
 				for i in range(self.number):
-					path_list = path_list + self.root + 'whole' + '/dipole_data/' + comp[0] + '/' + comp[i+1] + '/' + comp[0] + '_' + comp[i+1] + '_dipole.npy '
+					path_list = path_list + str(self.root / 'whole' / 'dipole_data' / comp[0] / comp[i+1] / (comp[0] + '_' + comp[i+1] + '_dipole.npy')) + ' '
 
 			elif data == 'mask':
-				path_list = self.root + self.sep + '/mask_data/' + comp[0] + '/' + comp[0] + '_mask.npy'
+				path_list = self.root / self.sep / 'mask_data' / comp[0] / (comp[0] + '_mask.npy')
 
 			elif data == 'gt':
-				path_list = self.root + self.sep + '/cosmos_data/' + comp[0] + '/' + comp[0] + '_cosmos.npy'
+				path_list = self.root / self.sep / 'cosmos_data' / comp[0] / (comp[0] + '_cosmos.npy')
 
 			elif data == 'name':
 				path_list = comp[0] + '_'
@@ -107,16 +108,16 @@ class QsmDataset(data.Dataset):
 		
 		data_name = self.comp_convert(data_comp_list, 'name')
 
-		x, y, z = np.load(phase_path_list[0]).shape
+		x, y, z = np.load(str(phase_path_list[0])).shape
 
 		phase_tensor_list = np.zeros((x, y, z, self.number))
 
-		gt_tensor = np.load(gt_path)
-		mask_tensor = np.load(mask_path)
+		gt_tensor = np.load(str(gt_path))
+		mask_tensor = np.load(str(mask_path))
 
 		for i in range(self.number):
 
-			phase_tensor_list[:, :, :, i] = np.load(phase_path_list[i]) / (self.tesla*self.gamma)
+			phase_tensor_list[:, :, :, i] = np.load(str(phase_path_list[i])) / (self.tesla*self.gamma)
 
 		if self.is_norm:	
 

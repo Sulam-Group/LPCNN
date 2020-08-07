@@ -2,9 +2,10 @@
 import os
 import glob
 import argparse
+from pathlib import Path
 
-data_path = 'data/numpy_data/whole'
-partition_data_path = 'data/numpy_data/partition'
+whole_data_path = Path('data/numpy_data/whole')
+partition_data_path = Path('data/numpy_data/partition')
 
 train_set = ['Sub001', 'Sub002', 'Sub004', 'Sub005', 'Sub008', 'Sub009']
 validation_set = ['Sub003', 'Sub006']
@@ -25,15 +26,17 @@ def combination(total_ori_num, number, comb_list=None, comb=None, previous_x=0):
 	return comb_list
 
 def create_list(args):
-	if not os.path.exists('data/numpy_data/whole/list'):
-		os.makedirs('data/numpy_data/whole/list')
 
-	with open('data/numpy_data/whole/list/train.txt', 'w') as f:
+	whole_list_path = whole_data_path / 'list'
+	whole_list_path.mkdir(parents=True, exist_ok=True)
+
+	whole_train_path = whole_list_path / 'train.txt'
+	with whole_train_path.open(mode='w') as f:
 		for subject in train_set:
 		
-			input_dir = data_path + '/phase_data/' + subject + '/'
+			input_dir = whole_data_path / 'phase_data' / subject
 
-			total_ori_num = len([name for name in os.listdir(input_dir) if 'ori' in name])
+			total_ori_num = len([name for name in input_dir.iterdir() if name.is_dir() and 'ori' in str(name)])
 			comb_list = combination(total_ori_num, args.number)
 			comb_num = len(comb_list)
 
@@ -45,12 +48,13 @@ def create_list(args):
 					f.write('ori' + ori + ' ')
 				f.write('ori' + ori_list[-1] + '\n')
 
-	with open('data/numpy_data/whole/list/validation.txt', 'w') as f:
+	whole_validation_path = whole_list_path / 'validation.txt'
+	with whole_validation_path.open(mode='w') as f:
 		for subject in validation_set:
 		
-			input_dir = data_path + '/phase_data/' + subject + '/'
+			input_dir = whole_data_path / 'phase_data' / subject
 
-			total_ori_num = len([name for name in os.listdir(input_dir) if 'ori' in name])
+			total_ori_num = len([name for name in input_dir.iterdir() if name.is_dir() and 'ori' in str(name)])
 			comb_list = combination(total_ori_num, args.number)
 			comb_num = len(comb_list)
 
@@ -62,41 +66,46 @@ def create_list(args):
 					f.write('ori' + ori + ' ')
 				f.write('ori' + ori_list[-1] + '\n')
 
-	if not os.path.exists('data/numpy_data/partition/list'):
-		os.makedirs('data/numpy_data/partition/list')
 
-	with open('data/numpy_data/partition/list/train.txt', 'w') as f:
+	partition_list_path = partition_data_path / 'list'
+	partition_list_path.mkdir(parents=True, exist_ok=True)
+
+	partition_train_path = partition_list_path / 'train.txt'
+	with partition_train_path.open(mode='w') as f:
 		for subject in train_set:
 		
-			input_dir = partition_data_path + '/phase_pdata/' + subject + '/'
+			input_dir = partition_data_path / 'phase_pdata' / subject
 
-			total_ori_num = len([name for name in os.listdir(input_dir) if 'ori' in name])
+			total_ori_num = len([name for name in input_dir.iterdir() if name.is_dir() and 'ori' in str(name)])
 			comb_list = combination(total_ori_num, args.number)
 			comb_num = len(comb_list)
 
+			sub_input_dir = input_dir / 'ori1'
 			for comb in comb_list:
 				ori_list = comb.split(' ')
-		
-				num = len([name for name in os.listdir(input_dir + 'ori1') if '.npy' in name])
+	
+				num = len([name for name in sub_input_dir.iterdir() if '.npy' in str(name)])	
 				for k in range(num):
 					f.write(subject + ' p' + str(k) + ' ')
 					for ori in ori_list[:-1]:
 						f.write('ori' + ori + ' ')
 					f.write('ori' + ori_list[-1] + '\n')
 
-	with open('data/numpy_data/partition/list/validation.txt', 'w') as f:
+	partition_validation_path = partition_list_path / 'validation.txt'
+	with partition_validation_path.open(mode='w') as f:
 		for subject in validation_set:
 		
-			input_dir = partition_data_path + '/phase_pdata/' + subject + '/'
+			input_dir = partition_data_path / 'phase_pdata' / subject
 
-			total_ori_num = len([name for name in os.listdir(input_dir) if 'ori' in name])
+			total_ori_num = len([name for name in input_dir.iterdir() if name.is_dir() and 'ori' in str(name)])
 			comb_list = combination(total_ori_num, args.number)
 			comb_num = len(comb_list)
 
+			sub_input_dir = input_dir / 'ori1'
 			for comb in comb_list:
 				ori_list = comb.split(' ')
 		
-				num = len([name for name in os.listdir(input_dir + 'ori1') if '.npy' in name])
+				num = len([name for name in sub_input_dir.iterdir() if '.npy' in str(name)])
 				for k in range(num):
 					f.write(subject + ' p' + str(k) + ' ')
 					for ori in ori_list[:-1]:

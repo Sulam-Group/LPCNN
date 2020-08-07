@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import argparse
 import numpy as np
 
@@ -21,14 +22,14 @@ import socket
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # output directory
-root_dir = 'data/'
-checkpoint_dir = 'checkpoints/'
-tb_log_dir = 'LPCNN/tb_log/'
-vis_output_path = 'LPCNN/result/'
+root_dir = Path('data/')
+checkpoint_dir = Path('checkpoints/')
+tb_log_dir = Path('LPCNN/tb_log/')
+vis_output_path = Path('LPCNN/result/')
 
 # parameter for relative value evaluation(validation)
-validation_mse = np.load(root_dir + 'numpy_data/partition/list/validation_mse.npy')
-whole_validation_mse = np.load(root_dir + 'numpy_data/whole/list/validation_mse.npy')
+validation_mse = np.load(str(root_dir / Path('numpy_data/partition/list/validation_mse.npy')))
+whole_validation_mse = np.load(str(root_dir / Path('numpy_data/whole/list/validation_mse.npy')))
 
 def main(args):
 
@@ -40,7 +41,7 @@ def main(args):
 		exp_name = args.model_arch + args.name
 
 		## tensorboard log
-		tb_writer = SummaryWriter(tb_log_dir + exp_name)
+		tb_writer = SummaryWriter(str(tb_log_dir / exp_name))
 
 		## data augmentation
 		# Todo :design which type of data aug
@@ -93,10 +94,10 @@ def main(args):
 
 			if mse_index <= best_per_index:
 				best_per_index = mse_index
-				best_name = checkpoint_dir + exp_name +'_Bmodel.pkl'
+				best_name = str(checkpoint_dir / Path(exp_name +'_Bmodel.pkl'))
 				torch.save(state, best_name)
 			else:
-				name = checkpoint_dir + exp_name +'_Emodel.pkl'
+				name = str(checkpoint_dir / Path(exp_name +'_Emodel.pkl'))
 				torch.save(state, name)
 			
 		tb_writer.close()
@@ -117,7 +118,7 @@ def main(args):
 		if args.gpu_num > 1:
 			model = nn.DataParallel(model)
 
-		model_name = args.resume_file.split('/')[-1].split('.')[0]
+		model_name = Path(args.resume_file).parts[-1].split('.')[0]
 		print(model_name)
 
 		## loss function and optimizer
@@ -154,7 +155,7 @@ def train(args, device, model, train_loader, epoch, loss_fn, optimizer, tb_write
 
 		per_loss = loss.item()
 
-		tb_writer.add_scalar('train/overall_loss', per_loss, total_tb_it)
+		tb_writer.add_scalar(str(Path('train/overall_loss')), per_loss, total_tb_it)
 		total_tb_it += 1
 
 		if batch_count%print_freq == 0:
@@ -198,7 +199,7 @@ def validation(device, model, val_loader, epoch, loss_fn, tb_writer):
 				og_gt = og_gt * mask
 
 			else:
-				og_output = torch.squeeze(output_data[-1], 0).permute(1, 2, 3, 0).cpu().numpy() * mask
+				og_output = torch.squeeze(output_data, 0).permute(1, 2, 3, 0).cpu().numpy() * mask
 				og_gt = torch.squeeze(gt_data, 0).permute(1, 2, 3, 0).cpu().numpy() * mask
 
 			mse_loss += np.sqrt(qsm_mse(og_gt, og_output, mask, roi=True))
@@ -212,16 +213,16 @@ def validation(device, model, val_loader, epoch, loss_fn, tb_writer):
 		print('alpha: %.3f' %(model.alpha.cpu().numpy()))
 		print('##Validation loss: %.8f RMSE: %.8f PSNR: %.8f SSIM: %.8f' %(avg_tb_loss, avg_mse_loss, avg_psnr_perf, avg_ssim_perf))
 
-		tb_writer.add_scalar('val/overall_loss', avg_tb_loss, epoch)
-		tb_writer.add_scalar('val/RMSE', avg_mse_loss, epoch)
-		tb_writer.add_scalar('val/PSNR', avg_psnr_perf, epoch)
-		tb_writer.add_scalar('val/SSIM', avg_ssim_perf, epoch)
+		tb_writer.add_scalar(str(Path('val/overall_loss')), avg_tb_loss, epoch)
+		tb_writer.add_scalar(str(Path('val/RMSE')), avg_mse_loss, epoch)
+		tb_writer.add_scalar(str(Path('val/PSNR')), avg_psnr_perf, epoch)
+		tb_writer.add_scalar(str(Path('val/SSIM')), avg_ssim_perf, epoch)
 
 	return avg_mse_loss
 
 def predict(args, device, model, data_loader, loss_fn, model_name):
 
-	nifti_path = root_dir + 'nifti_data/'
+	nifti_path = root_dir / 'nifti_data'
 
 	model.eval()
 
@@ -264,18 +265,18 @@ def predict(args, device, model, data_loader, loss_fn, model_name):
 				subject = input_name[0].split('_')[0]
 				ori = input_name[0].split('_')[1]
 	
-				qsm_path = nifti_path + subject + '/cosmos/' + subject + '_cosmos.nii.gz'
+				qsm_path = nifti_path / subject / 'cosmos' / (subject + '_cosmos.nii.gz')
 
-				if not os.path.exists(vis_output_path + model_name + '_num' + str(args.number)):
-					os.makedirs(vis_output_path + model_name + '_num' + str(args.number))
+				output_path = vis_output_path / (model_name  + '_num' + str(args.number))
+				output_path.mkdir(parents=True, exist_ok=True)
 
 				if args.size == 'whole':
-					save_name = vis_output_path + model_name + '_num' + str(args.number) + '/' + subject + '_' + ori
+					save_name = vis_output_path / (model_name + '_num' + str(args.number)) / (subject + '_' + ori)
 				else:
 					patch_num = input_name[0].split('_')[2] 
-					save_name = vis_output_path + model_name + '_num' + str(args.number) + '/' + subject + '_' + ori + '_' + patch_num
+					save_name = vis_output_path / (model_name + '_num' + str(args.number)) / (subject + '_' + ori + '_' + patch_num)
 
-				qsm_display(og_output, qsm_path, torch.squeeze(mask_data, 0).cpu().numpy(), out_name=save_name)
+				qsm_display(og_output, str(qsm_path), torch.squeeze(mask_data, 0).cpu().numpy(), out_name=str(save_name))
 
 		avg_mse_loss = mse_loss / len(data_loader.dataset) / np.sqrt(validation_mse)
 		avg_ssim_perf = ssim_perf / len(data_loader.dataset)

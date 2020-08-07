@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import argparse
 import numpy as np
 import nibabel as nib
@@ -17,16 +18,16 @@ from lib.tool.tool import qsm_display
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 # output directory
-root_dir = 'data/'
-vis_output_path = 'LPCNN/test_result/'
+root_dir = Path('data/')
+vis_output_path = Path('LPCNN/test_result/')
 
 # parameter for relative value evaluation(validation)
-whole_validation_mse = np.load(root_dir + 'numpy_data/whole/list/validation_mse.npy')
+whole_validation_mse = np.load(str(root_dir / Path('numpy_data/whole/list/validation_mse.npy')))
 
 # data statistics
 gamma = 42.57747892
-gt_mean = np.load(root_dir + 'numpy_data/whole/list/train_gt_mean.npy')
-gt_std = np.load(root_dir + 'numpy_data/whole/list/train_gt_std.npy')
+gt_mean = np.load(str(root_dir / Path('numpy_data/whole/list/train_gt_mean.npy')))
+gt_std = np.load(str(root_dir / Path('numpy_data/whole/list/train_gt_std.npy')))
 
 
 def main(args):
@@ -63,7 +64,7 @@ def main(args):
 				gt_data = nib.load(line.strip('\n')).get_fdata()
 	
 	# load model
-	model = chooseModel(args, root_dir + 'numpy_data/whole/list/')
+	model = chooseModel(args, root_dir / Path('numpy_data/whole/list/'))
 	model.load_state_dict(torch.load(args.resume_file, map_location=device)['model_state'])
 	model.to(device)
 	print(args.model_arch + ' loaded.')
@@ -72,7 +73,7 @@ def main(args):
 	if args.gpu_num > 1:
 		model = nn.DataParallel(model)
 
-	model_name = args.resume_file.split('/')[-1].split('.')[0]
+	model_name = Path(args.resume_file).parts[-1].split('.')[0]
 	print(model_name)
 
 	mse_loss = 0
@@ -108,12 +109,12 @@ def main(args):
 			ssim_perf += qsm_ssim(og_gt, og_output, mask, root_dir)	
 			psnr_perf += qsm_psnr(og_gt, og_output, mask, root_dir, roi=True)
 
-		if not os.path.exists(vis_output_path + model_name):
-			os.makedirs(vis_output_path + model_name)
+		output_path = vis_output_path / model_name
+		output_path.mkdir(parents=True, exist_ok=True)
 
-		save_name = vis_output_path + model_name + '/' + example_name
+		save_name = output_path / example_name
 
-		qsm_display(og_output, phase_example, torch.squeeze(mask_data, 0).cpu().numpy(), out_name=save_name)
+		qsm_display(og_output, phase_example, torch.squeeze(mask_data, 0).cpu().numpy(), out_name=str(save_name))
 
 	if not args.gt_file == None:
 		avg_mse_loss = mse_loss / np.sqrt(whole_validation_mse)

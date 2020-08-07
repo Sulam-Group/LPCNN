@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
@@ -72,8 +73,8 @@ class wBasicBlock(nn.Module):
 class LPCNN(nn.Module):
 	def __init__(self, gt_mean, gt_std):
 		super().__init__()
-		self.gt_mean = torch.from_numpy(np.load(gt_mean)).float()
-		self.gt_std = torch.from_numpy(np.load(gt_std)).float()
+		self.gt_mean = torch.from_numpy(np.load(str(gt_mean))).float()
+		self.gt_std = torch.from_numpy(np.load(str(gt_std))).float()
 
 		self.iter_num = 3
 

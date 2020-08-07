@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from pathlib import Path
 from tqdm import tqdm
 
 from skimage.measure import compare_ssim as ssim
@@ -18,7 +19,7 @@ def prepareDataset(args, root_dir, data_aug=None, normalize=False):
 	
 	if args.dataset.lower() == 'qsm':
 
-		dataset_path = root_dir + 'numpy_data/'
+		dataset_path = root_dir / 'numpy_data'
 		
 		train_dataset = QsmDataset(dataset_path, split='train', number=args.number, tesla=args.tesla, is_norm=normalize)
 		val_dataset = QsmDataset(dataset_path, split='validation', number=args.number, tesla=args.tesla, is_norm=normalize)
@@ -41,9 +42,9 @@ def loadData(args, root_dir, prediction_data, normalize=False):
 		prediction_set, case = prediction_data
 
 		if case == 'whole':
-			dataset_path = root_dir + 'numpy_data/'
+			dataset_path = root_dir / 'numpy_data'
 		else:
-			dataset_path = root_dir + 'numpy_data/'
+			dataset_path = root_dir / 'numpy_data'
 
 		if prediction_set == 'train':
 			ext_data = QsmDataset(dataset_path, split='train', sep=case, number=args.number, tesla=args.tesla, is_norm=normalize)
@@ -67,7 +68,7 @@ def chooseModel(args, root_dir):
 	
 	model = None
 	if args.model_arch.lower() == 'lpcnn':
-		model = LPCNN(root_dir + 'train_gt_mean.npy', root_dir + 'train_gt_std.npy')
+		model = LPCNN(root_dir / 'train_gt_mean.npy', root_dir / 'train_gt_std.npy')
 	else:
 		raise ValueError('Unknown model arch type: ' + args.model_arch.lower())
 		
@@ -101,9 +102,9 @@ def chooseOptimizer(model, args):
 	
 def qsm_psnr(gt, input_data, mask, root_dir, roi=True):
 
-	path = root_dir + 'numpy_data/whole/list/'
-	max_val = np.load(path + 'train_val_gt_max.npy')
-	min_val = np.load(path + 'train_val_gt_min.npy')
+	path = root_dir / Path('numpy_data/whole/list/')
+	max_val = np.load(str(path / 'train_val_gt_max.npy'))
+	min_val = np.load(str(path / 'train_val_gt_min.npy'))
 
 	mod_input = np.copy(input_data)
 	mod_input[mod_input < min_val] = min_val
@@ -118,9 +119,9 @@ def qsm_psnr(gt, input_data, mask, root_dir, roi=True):
 
 def qsm_ssim(gt, input_data, mask, root_dir):
 
-	path = root_dir + 'numpy_data/whole/list/'
-	max_val = np.load(path + 'train_val_gt_max.npy')
-	min_val = np.load(path + 'train_val_gt_min.npy')
+	path = root_dir / Path('numpy_data/whole/list/')
+	max_val = np.load(str(path / 'train_val_gt_max.npy'))
+	min_val = np.load(str(path / 'train_val_gt_min.npy'))
 	
 	mod_input = np.copy(input_data)
 	
