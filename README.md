@@ -3,7 +3,8 @@
 <!--- put link here --->
 
 ### Official pytorch implementation of the paper<br>
-LPCNN was developed by Kuo-Wei Lai, Dr. Xu Li and Dr. Jeremias Sulam, for solving the ill-posed dipole deconvolution problem in Quantitative Susceptibility Mapping (QSM). By integrating proximal gradient descent with deep learning, it is the first deep learning based QSM method that can handle an arbitrary number of phase input measurements. In this repository, we provides official implementation of LPCNN network and the QSM training datasets (n=8, with local phase data acquired at 7T and 4-5 orientations COSMOS). The PyTorch implementations of LPCNN that offer the following functions:<br>
+LPCNN was developed by Kuo-Wei Lai, Dr. Xu Li and Dr. Jeremias Sulam, for solving the ill-posed dipole deconvolution problem in Quantitative Susceptibility Mapping (QSM). By integrating proximal gradient descent with deep learning, it is the first deep learning based QSM method that can handle an arbitrary number of phase input measurements. In this repository, we provides official implementation of LPCNN network and the QSM training datasets (n=8, with local phase data acquired at 7T and 4-5 orientations COSMOS).<br>
+The PyTorch implementations of LPCNN that offer the following functions:<br>
  - Create default training dataset including patched local phase image and QSM target pairs
  - Conduct single or multiple orientation dipole deconvolution training using LPCNN
  - Reconstruct QSM maps with user’s own data using trained LPCNN model
@@ -51,6 +52,11 @@ arguments:
 Template command using provided dataset:
 ```
 python LPCNN/main.py --mode train --name _test --number 1 --tesla 7 --model_arch lpcnn --num_epoch 100 --batch_size 2 --learning_rate 0.0001 --optimizer adam
+```
+#### Tensorboard Visualization
+During training, users can monitor the training by using the following command:
+```
+tensorboard --port 6006 --logdir LPCNN/tb_log
 ```
 ### Test on validation set 
 ```
