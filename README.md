@@ -3,8 +3,8 @@
 <!--- put link here --->
 
 ### Official pytorch implementation of the paper<br>
-LPCNN was developed by Kuo-Wei Lai, Dr. Xu Li and Dr. Jeremias Sulam, for solving the ill-posed dipole deconvolution problem in Quantitative Susceptibility Mapping (QSM). By integrating proximal gradient descent with deep learning, it is the first deep learning based QSM method that can handle an arbitrary number of phase input measurements. In this repository, we provides official implementation of LPCNN network and the QSM training datasets (n=8, with local phase data acquired at 7T and 4-5 orientations COSMOS).<br>
-The PyTorch implementations of LPCNN that offer the following functions:<br>
+LPCNN was developed by Kuo-Wei Lai, Dr. Xu Li and Dr. Jeremias Sulam, for solving the ill-posed dipole deconvolution problem in Quantitative Susceptibility Mapping (QSM). By integrating proximal gradient descent with deep learning, it is the first deep learning based QSM method that can handle an arbitrary number of phase input measurements. In this repository, we provides official implementation of LPCNN network and the QSM training datasets (n=8, with local phase data acquired at 7T and 4-5 orientations COSMOS).<br><br>
+The PyTorch implementations of LPCNN that offer the following functions:
  - Create default training dataset including patched local phase image and QSM target pairs
  - Conduct single or multiple orientation dipole deconvolution training using LPCNN
  - Reconstruct QSM maps with user’s own data using trained LPCNN model
