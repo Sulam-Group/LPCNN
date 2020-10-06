@@ -1,5 +1,5 @@
 # Learned Proximal Networks for Quantitative Susceptibility Mapping (LPCNN)
-[MICCAI](https://www.google.com "Google's Homepage") | [Arxiv](https://arxiv.org/abs/2008.05024 "Arxiv")
+[MICCAI](https://link.springer.com/chapter/10.1007/978-3-030-59713-9_13) | [Arxiv](https://arxiv.org/abs/2008.05024 "Arxiv")
 <!--- put link here --->
 
 ### Official pytorch implementation of the paper<br>
