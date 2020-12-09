@@ -181,7 +181,7 @@ def validation(device, model, val_loader, epoch, loss_fn, tb_writer):
 			gt_data = gt_data.to(device, dtype=torch.float)
 			mask_data = mask_data.to(device, dtype=torch.float)
 
-			output_data = model(phase_data, dipole_data_list, mask_data.unsqueeze(1))
+			output_data = model(phase_data_list, dipole_data_list, mask_data.unsqueeze(1))
 
 			loss = loss_fn(output_data, gt_data)
 
