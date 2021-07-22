@@ -1,7 +1,6 @@
 
 __pycache__/
 .DS_Store
-*.npy
 
 tb_log/
 result/
