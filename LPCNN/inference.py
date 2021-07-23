@@ -36,7 +36,7 @@ def main(args):
 
 	# name
 	example_name = args.model_arch + args.save_name
-
+	
 	# load data
 	phase_path_list = []
 	with open(str(Path(args.phase_file))) as f:
@@ -63,6 +63,14 @@ def main(args):
 			for line in f:
 				gt_data = nib.load(str(Path(line.strip('\n')))).get_fdata()
 	
+	# crop
+	crop = args.crop
+	if crop == None:
+		crop = [0, 0, 0, 0, 0, 0]
+	if len(crop) != 6:
+		print('ERROR: crop parameters should be 6 intgers')
+		exit()
+
 	# load model
 	model = chooseModel(args, root_dir / Path('numpy_data/whole/list/'))
 	model.load_state_dict(torch.load(args.resume_file, map_location=device)['model_state'])
@@ -85,10 +93,10 @@ def main(args):
 	with torch.no_grad():
 	
 		#cuda
-		phase_data_list = torch.from_numpy(phase_data_list[np.newaxis,np.newaxis,:,:,:,:])
+		phase_data_list = torch.from_numpy(phase_data_list[np.newaxis,np.newaxis,crop[0]:x-crop[1],crop[2]:y-crop[3],crop[4]:z-crop[5],:])
 		phase_data_list = phase_data_list.to(device, dtype=torch.float)
 
-		mask_data = torch.from_numpy(mask_data[np.newaxis,:,:,:])
+		mask_data = torch.from_numpy(mask_data[np.newaxis,crop[0]:x-crop[1],crop[2]:y-crop[3],crop[4]:z-crop[5]])
 		mask_data = mask_data.to(device, dtype=torch.float)
 	
 		output_data = model(phase_data_list, (dipole_data_list,), mask_data.unsqueeze(1))
@@ -113,6 +121,8 @@ def main(args):
 		output_path.mkdir(parents=True, exist_ok=True)
 
 		save_name = output_path / example_name
+	
+		og_output = np.pad(og_output, ((crop[0],crop[1]), (crop[2],crop[3]), (crop[4],crop[5]), (0,0)), mode='constant')
 
 		qsm_display(og_output, phase_example, torch.squeeze(mask_data, 0).cpu().numpy(), out_name=str(save_name))
 
@@ -137,6 +147,8 @@ parser.add_argument('--gpu_num', default=1, type=int, choices=[1, 2, 3, 4], help
 parser.add_argument('--model_arch', default='lpcnn', choices=['lpcnn'], help='network model (default: lpcnn)')
 parser.add_argument('--no_cuda', action='store_true', default=False, help='disables CUDA training')
 parser.add_argument('--resume_file', type=str, default=None, help='the checkpoint file to resume from')
+
+parser.add_argument('--crop', type=int, nargs='+',  help='crops redundant margin')
 
 if __name__ == '__main__':
 	args = parser.parse_args()
