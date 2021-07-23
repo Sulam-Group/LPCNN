@@ -94,6 +94,7 @@ arguments:
 --model_arch                  network architecture [default is lpcnn]
 --no_cuda                     disables CUDA training [default is false]
 --resume_file                 resume saved checkpoint for testing [default is None]
+--crop                        crop redundant background margin to reduce memory usage
 ```
 If you have ground-truth QSM result, you can add `--gt_file [GT_DATA_PATH]` and the function will calculate the performance.<br>
 Template command using provided dataset (number=3):
