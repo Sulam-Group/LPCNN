@@ -94,10 +94,10 @@ arguments:
 --model_arch                  network architecture [default is lpcnn]
 --no_cuda                     disables CUDA training [default is false]
 --resume_file                 resume saved checkpoint for testing [default is None]
---crop                        crop redundant background margin to reduce memory usage
+--crop                        crop redundant background margin to reduce memory usage [before_axis1, after_axis1, before_axis2, after_axis2, before_axis3, after_axis3]
 ```
 If you have ground-truth QSM result, you can add `--gt_file [GT_DATA_PATH]` and the function will calculate the performance.<br>
 Template command using provided dataset (number=3):
 ```
-python LPCNN/inference.py --number 3 --phase_file test_data/three/phase_data3.txt --dipole_file test_data/three/dipole_data3.txt --mask_file test_data/three/mask_data3.txt --gt_file test_data/three/gt_data3.txt --resume_file checkpoints/lpcnn_test_Bmodel.pkl
+python LPCNN/inference.py --number 3 --phase_file test_data/three/phase_data3.txt --dipole_file test_data/three/dipole_data3.txt --mask_file test_data/three/mask_data3.txt --gt_file test_data/three/gt_data3.txt --resume_file checkpoints/lpcnn_test_Bmodel.pkl --crop 10 10 5 5 0 0
 ```
