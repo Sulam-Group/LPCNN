@@ -3,8 +3,15 @@ import numpy as np
 from pathlib import Path
 from tqdm import tqdm
 
-from skimage.measure import compare_ssim as ssim
-from skimage.measure import compare_psnr as psnr
+try:
+	# New scikit-image (>= 0.16)
+    from skimage.metrics import structural_similarity as ssim
+    from skimage.metrics import peak_signal_noise_ratio as psnr
+except ImportError:
+	# Old scikit-image
+	from skimage.measure import compare_ssim as ssim
+	from skimage.measure import compare_psnr as psnr
+
 
 import torch
 import torch.nn as nn
@@ -111,10 +118,10 @@ def qsm_psnr(gt, input_data, mask, root_dir, roi=True):
 	mod_input[mod_input > max_val] = max_val
 	
 	if roi:
-		psnr_value = psnr(gt[mask==1], mod_input[mask==1], max_val - min_val)
+		psnr_value = psnr(gt[mask==1], mod_input[mask==1], data_range=max_val - min_val)
 	else:
-		psnr_value = psnr(gt, mod_input, max_val - min_val)
-	
+		psnr_value = psnr(gt, mod_input, data_range=max_val - min_val)
+
 	return psnr_value
 
 def qsm_ssim(gt, input_data, mask, root_dir):
@@ -130,8 +137,12 @@ def qsm_ssim(gt, input_data, mask, root_dir):
 
 	new_gt = (gt - min_val) / (max_val - min_val)
 	new_input = (mod_input - min_val) / (max_val - min_val)
-	
-	ssim_value = ssim(new_gt, new_input, multichannel=True, data_range=1, gaussian_weights=True, sigma=1.5, use_sample_covariance=False)
+	try:
+		# Old
+		ssim_value = ssim(new_gt, new_input, multichannel=True, data_range=1, gaussian_weights=True, sigma=1.5, use_sample_covariance=False)
+	except:
+		# New
+		ssim_value = ssim(new_gt, new_input, channel_axis=-1, data_range=1, gaussian_weights=True, sigma=1.5, use_sample_covariance=False)
 
 	return ssim_value
 

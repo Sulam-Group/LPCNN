@@ -11,6 +11,9 @@ The PyTorch implementations of LPCNN that offer the following functions:
 <br><br>
 ![alt text](https://github.com/Sulam-Group/LPCNN/blob/master/imgs/overall_framework.png "overall framework")
 
+## 🚀 Updates
+- 2025-12 — **Updated the code for newer PyTorch and CUDA versions.** Replaced deprecated torch FFT APIs and SSIM/PSNR functions from older scikit-image versions, while preserving backward compatibility. New code has been tested on NVIDIA L40S GPUs with `Python 3.13` and `PyTorch 2.9` (see `pyproject.toml` for dependency details).
+
 ## Requirements
 - [Python 3.6](https://www.python.org/)
 - [PyTorch 1.2.0](https://pytorch.org)

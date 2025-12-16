@@ -130,7 +130,9 @@ class LPCNN(nn.Module):
 				dim3_batch[-1].append(dk_batch[-1][-1].shape[3])			
 
 
-				x_est[num][b_n, :, :, :, :] = self.alpha * torch.ifft(dk_batch[-1][num] * torch.rfft(F.pad(y[b_n, :, :, :, :, num], (0, dim3_batch[-1][num]-z_dim, 0, dim2_batch[-1][num]-y_dim, 0, dim1_batch[-1][num]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True)[:, :x_dim, :y_dim, :z_dim, 0]
+				x_est[num][b_n, :, :, :, :] = self.alpha * _ifft(
+					dk_batch[-1][num] * _rfft(F.pad(y[b_n, :, :, :, :, num], (0, dim3_batch[-1][num]-z_dim, 0, dim2_batch[-1][num]-y_dim, 0, dim1_batch[-1][num]-x_dim)))
+				)[:, :x_dim, :y_dim, :z_dim, 0]
 
 
 		for i in range(self.iter_num):
@@ -145,7 +147,7 @@ class LPCNN(nn.Module):
 		
 				for b_n in range(batch_size):
 					for num in range(number):
-						pn_x_pred[b_n, :, :, :, :] += x_est[num][b_n, :, :, :, :] - self.alpha * torch.ifft(dk_batch[b_n][num] * dk_batch[b_n][num] * torch.rfft(F.pad(den_x_pred[b_n, :, :, :, :], (0, dim3_batch[b_n][num]-z_dim, 0, dim2_batch[b_n][num]-y_dim, 0, dim1_batch[b_n][num]-x_dim)), 3, normalized=True, onesided=False), 3, normalized=True)[:, :x_dim, :y_dim, :z_dim, 0]
+						pn_x_pred[b_n, :, :, :, :] += x_est[num][b_n, :, :, :, :] - self.alpha * _ifft(dk_batch[b_n][num] * dk_batch[b_n][num] * _rfft(F.pad(den_x_pred[b_n, :, :, :, :], (0, dim3_batch[b_n][num]-z_dim, 0, dim2_batch[b_n][num]-y_dim, 0, dim1_batch[b_n][num]-x_dim))))[:, :x_dim, :y_dim, :z_dim, 0]
 
 			x_input = ((pn_x_pred - self.gt_mean) / self.gt_std) * mask
 			x_pred = self.gen(x_input)
@@ -153,3 +155,41 @@ class LPCNN(nn.Module):
 
 		return x_pred
 
+
+def _rfft(x):
+    """
+    Fourier Transform of real signal.
+    
+    Input:
+        x: [..., w, h, d], real.
+    Return:
+        [..., w, h, d, 2]. The last dimension saves real and imaginary parts of the result separately.
+    """
+    try:
+        # torch==1.2.0
+        x = torch.rfft(x, 3, normalized=True, onesided=False)
+    except:
+        # torch==1.10.0
+        x = torch.fft.fftn(x, dim=(-3, -2, -1), norm='ortho')
+        x = torch.stack((x.real, x.imag), dim=-1)
+    return x
+
+
+def _ifft(x):
+    """
+    Inverse Fourier Transform.
+    
+    Input:
+        x: [..., w, h, d, 2]. The last dimension saves real and imaginary parts.
+    Return:
+        [..., w, h, d, 2]. The last dimension saves real and imaginary parts.
+    """
+    try:
+        # torch==1.2.0
+        x = torch.ifft(x, 3, normalized=True)
+    except:
+        # torch==1.10.0
+        x = torch.view_as_complex(x)
+        x = torch.fft.ifftn(x, dim=(-3, -2, -1), norm='ortho')
+        x = torch.stack((x.real, x.imag), dim=-1)
+    return x

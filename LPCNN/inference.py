@@ -112,6 +112,7 @@ def main(args):
 
 		
 		if not args.gt_file == None:
+			gt_data = gt_data[crop[0]:x-crop[1],crop[2]:y-crop[3],crop[4]:z-crop[5]]
 			og_gt = gt_data[:, :, :, np.newaxis] * mask
 			mse_loss += np.sqrt(qsm_mse(og_gt, og_output, mask, roi=True))
 			ssim_perf += qsm_ssim(og_gt, og_output, mask, root_dir)	
